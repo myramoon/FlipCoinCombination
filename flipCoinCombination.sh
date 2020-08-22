@@ -1,21 +1,82 @@
 #!/usr/local/bin/bash 
 
+#PROGRAM SUMMARY: User is asked the number of times flip is required.For each combination (SINGLET|DOUBLET|TRIPLET),the following is done:
+# for loop to simulate the flip for reqd times. The values for each type in the combination are stored in an array.
+#Finally the array containing all values is sorted and maximum value noted.The keys in the dictionary having this maximum value are determined and printed.
+
+
+#ARRAY
+declare -a sortarray						    #Sorts and stores values in dictionary 
+
 #DICTIONARY
-declare -A flipdictionary  					    #Stores triplet combination
-declare -A tripletpercent					    #Stores triplet percentage
+declare -A flipdictionary  					    #Stores singlet,doublet and triplet combinations
 
 #MAIN PROGRAM
 
+#SINGLET >>>>>>>>>>>>>>>>>>>>>>>
+
 read -p "Enter number of times you want to flip: " fliptimes
 
-flipdictionary["HHH"]=0						    #initialize values stored in dictionary indices
+flipdictionary["H"]=0                                               #initialize values stored in dictionary indices for SINGLET
+flipdictionary["T"]=0
+
+for (( count=0; count<$fliptimes; count++))                         #for loop to run multiple simulations
+do
+        flip_Result=$((RANDOM%2))                                   #get flip result for current coin flip
+
+        if [[ $flip_Result -eq 1 ]]
+        then
+                flipdictionary["H"]=$((${flipdictionary["H"]} + 1)) #increment heads if flip result is 1
+        else
+                flipdictionary["T"]=$((${flipdictionary["T"]} + 1)) #increment tails if flip result is 0
+        fi
+done
+
+sortarray[0]=${flipdictionary["H"]}				    #store values in dictionary into array
+sortarray[1]=${flipdictionary["T"]}
+
+#DOUBLET >>>>>>>>>>>>>>>>>>>>>>>>
+
+flipdictionary["HH"]=0                                              #initialize values stored in dictionary indices for DOUBLET
+flipdictionary["HT"]=0
+flipdictionary["TH"]=0
+flipdictionary["TT"]=0
+
+for (( count=0; count<$fliptimes; count++))                         #for loop to run multiple simulations
+do
+        coin1=$((RANDOM%2))                                         #get flip result for COIN1
+        coin2=$((RANDOM%2))                                         #get flip result for COIN2
+
+        case "$coin1$coin2" in                                      #case statement to determine number of times each combination appeared                   $
+
+                11)
+                flipdictionary["HH"]=$((${flipdictionary["HH"]} + 1 ));;
+                10)
+                flipdictionary["HT"]=$((${flipdictionary["HT"]} + 1 ));;
+                01)
+                flipdictionary["TH"]=$((${flipdictionary["TH"]} + 1 ));;
+                00)
+                flipdictionary["TT"]=$((${flipdictionary["TT"]} + 1 ));;
+        esac
+
+done
+sortarray[2]=${flipdictionary["HH"]}				    #store values in dictionary into array
+sortarray[3]=${flipdictionary["HT"]}
+sortarray[4]=${flipdictionary["TH"]}
+sortarray[5]=${flipdictionary["TT"]}
+
+#TRIPLET >>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+
+flipdictionary["HHH"]=0						    #initialize values stored in dictionary indices for TRIPLET
 flipdictionary["HHT"]=0
 flipdictionary["HTH"]=0
 flipdictionary["HTT"]=0
 flipdictionary["THH"]=0
 flipdictionary["THT"]=0
 flipdictionary["TTH"]=0
-flipdictionary["TTT"]=0 
+flipdictionary["TTT"]=0
+
 
 for (( count=0; count<$fliptimes; count++))			    #for loop to run multiple simulations
 do
@@ -45,17 +106,40 @@ do
 
 done
 
-tripletpercent["HHH%"]=`echo "scale=2; ${flipdictionary["HHH"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`  #Determine triplet percentage,display integral part
-tripletpercent["HHT%"]=`echo "scale=2; ${flipdictionary["HHT"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`
-tripletpercent["HTH%"]=`echo "scale=2; ${flipdictionary["HTH"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`
-tripletpercent["HTT%"]=`echo "scale=2; ${flipdictionary["HTT"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`
-tripletpercent["THH%"]=`echo "scale=2; ${flipdictionary["THH"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`
-tripletpercent["THT%"]=`echo "scale=2; ${flipdictionary["THT"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`
-tripletpercent["TTH%"]=`echo "scale=2; ${flipdictionary["TTH"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`
-tripletpercent["TTT%"]=`echo "scale=2; ${flipdictionary["TTT"]} / $fliptimes * 100" | bc -l |awk -F. '{print $1 "%"}'`
+sortarray[6]=${flipdictionary["HHH"]}
+sortarray[7]=${flipdictionary["HHT"]}
+sortarray[8]=${flipdictionary["HTH"]}
+sortarray[9]=${flipdictionary["HTT"]}
+sortarray[10]=${flipdictionary["THH"]}
+sortarray[11]=${flipdictionary["THT"]}
+sortarray[12]=${flipdictionary["TTH"]}
+sortarray[13]=${flipdictionary["TTT"]}
 
-echo ${!flipdictionary[@]}					    #Print triplet appearances
+echo ${!flipdictionary[@]}					    
 echo ${flipdictionary[@]}
-echo ${!tripletpercent[@]}                                          #Print triplet percentage
-echo ${tripletpercent[@]}
 
+for (( count=0; count<=12; count++)) 				   #loop to sort array
+do
+	for ((index=0; index<=12; index++ ))
+	do
+		if [[ ${sortarray[index]} -gt ${sortarray[$((index+1))]} ]]
+        	then
+                	temp=${sortarray[index]}
+                	sortarray[index]=${sortarray[$((index+1))]}
+                	sortarray[$((index+1))]=$temp
+
+		fi	
+	done
+done
+
+echo "sortarray"${sortarray[@]}					   #Print sorted array
+max=${sortarray[13]}						   #Find maximum value
+
+echo "The winning combination(s) is/are : "
+for key in ${!flipdictionary[@]}				   #Find keys having maximum value and print them
+do
+	if [[ ${flipdictionary[$key]} -eq $max ]]
+	then
+		echo $key
+	fi
+done
